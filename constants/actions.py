@@ -3,17 +3,17 @@ from enum import IntEnum
 
 @unique
 class Actions(IntEnum):
-    Idle = 0
-    Afk = 1
-    Playing = 2
-    Editing = 3
-    Modding = 4
-    Multiplayer = 5
-    Watching = 6
-    Unknown = 7
-    Testing = 8
-    Submitting = 9
-    Paused = 10
-    Lobby = 11
-    Multiplaying = 12
-    OsuDirect = 13
+    IDLE = 0
+    AFK = 1
+    PLAYING = 2
+    EDITING = 3
+    MODDING = 4
+    MULTIPLAYER = 5
+    WATCHING = 6
+    UNKNOWN = 7
+    TESTING = 8
+    SUBMITTING = 9
+    PAUSED = 10
+    LOBBY = 11
+    MULTIPLAYING = 12
+    OSUDIRECT = 13

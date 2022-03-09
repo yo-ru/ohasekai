@@ -55,7 +55,7 @@ async def bancho_post():
         )
         data += Writer.userStatistics(
             2,                       # User ID
-            Actions.Submitting,      # Action
+            Actions.SUBMITTING,      # Action
             "themselves to Satan.",  # Action Text
             "",                      # Map MD5
             Mods.NOMOD,              # Mods
