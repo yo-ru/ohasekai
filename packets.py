@@ -85,7 +85,7 @@ class Writer:
         )
 
     def channelInfoEnd() -> bytes:
-        return write(89)
+        return write(ServerPackets.CHANNEL_INFO_END)
 
 def write(packetID: int, *args: tuple[Any, Callable]) -> bytes:
     packet = bytearray(struct.pack("<Hx", packetID))
