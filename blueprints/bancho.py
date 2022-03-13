@@ -179,9 +179,9 @@ async def login(body, db):
     )
 
     # calculate execution time
-    handleEndTime = f"{((time.time() - handleStartTime) * 1000):.2f}ms"
+    handleEndTime = (time.time() - handleStartTime) * 1000
 
-    data += Writer.notification(f"ohasekai: Welcome {user['username']}!\nTook {handleEndTime}")
+    data += Writer.notification(f"ohasekai: Welcome {user['username']}!\nTook {handleEndTime:.2f}ms")
     """ end writing data """
 
     return bytes(data), 200, {"cho-token": str(uuid.uuid4())}
