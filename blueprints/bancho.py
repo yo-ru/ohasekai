@@ -28,8 +28,9 @@ async def bancho_post():
     headers = request.headers
     body = await request.data
 
+    # not osu!
     if "User-Agent" not in headers or headers["User-Agent"] != "osu!":
-        return
+        return await bancho_get()
 
     # client requesting login
     if "osu-token" not in headers:
@@ -37,7 +38,7 @@ async def bancho_post():
             return await login(body, db)
 
     # TODO: client reconnecting/doing other stuff
-    return "ok", 200
+    return b"ok", 200
 
 # bancho login
 bcryptCache = {}
@@ -158,7 +159,7 @@ async def login(body, db):
 
     # calculate execution time
     handleEndTime = f"{((time.time() - handleStartTime) * 1000):.2f}ms"
-    
+
     data += Writer.notification(f"ohasekai: Welcome {user['username']}!\nTook {handleEndTime}")
     """ end writing data """
     
