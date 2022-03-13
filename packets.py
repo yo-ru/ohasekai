@@ -8,7 +8,13 @@ from constants.packets import ClientPackets
 from constants.packets import ServerPackets
 
 class Reader:
-    ...
+    def __init__(self, body: memoryview) -> None:
+        self.body = body
+
+    # TODO: iteration >:c
+
+""" read functions """
+# TODO: read functions
 
 class Writer:
     def __init__(self) -> None:
@@ -87,6 +93,9 @@ class Writer:
     def channelInfoEnd() -> bytes:
         return write(ServerPackets.CHANNEL_INFO_END)
 
+
+
+""" write functions """
 def write(packetID: int, *args: tuple[Any, Callable]) -> bytes:
     packet = bytearray(struct.pack("<Hx", packetID))
 
@@ -110,7 +119,6 @@ def write_uleb128(num: int) -> Union[bytes, bytearray]:
 
     return ret
 
-
 def write_string(string: str) -> bytes:
     if string:
         encoded = string.encode()
@@ -119,7 +127,6 @@ def write_string(string: str) -> bytes:
         ret = b"\x00"
 
     return ret
-
 
 def write_i32_list(list: Collection[int]) -> bytearray:
     ret = bytearray(len(list).to_bytes(2, "little"))

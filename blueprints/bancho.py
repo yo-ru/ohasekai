@@ -8,6 +8,7 @@ from quart import request
 from quart import Blueprint
 from quart import current_app
 
+from packets import Reader
 from packets import Writer
 from constants.mods import Mods
 from constants.modes import Modes
@@ -38,6 +39,26 @@ async def bancho_post():
             return await login(body, db)
 
     # TODO: client reconnecting/doing other stuff
+
+    # DEBUG
+    log("=== DEBUG ===", Ansi.LCYAN)
+    #log(f"Headers: {headers}", Ansi.LYELLOW)
+    log(f"Body: {body}", Ansi.LBLUE)
+    log("=== DEBUG ===", Ansi.LCYAN)
+
+    """
+    TODO: handle client packets
+    to complete this part of bancho we need:
+            - [] a player object 
+            - [] a channel object
+            - [] a message object
+            - [] a match object
+            - [] a replay object
+    
+    with memoryview(body) as body:
+        for packet in Reader(body):
+            ...
+    """
     return b"ok", 200
 
 # bancho login
@@ -162,5 +183,5 @@ async def login(body, db):
 
     data += Writer.notification(f"ohasekai: Welcome {user['username']}!\nTook {handleEndTime}")
     """ end writing data """
-    
+
     return bytes(data), 200, {"cho-token": str(uuid.uuid4())}
