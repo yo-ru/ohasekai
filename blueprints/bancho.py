@@ -43,7 +43,7 @@ async def bancho_post():
     # DEBUG
     log("=== DEBUG ===", Ansi.LCYAN)
     #log(f"Headers: {headers}", Ansi.LYELLOW)
-    log(f"Body: {body}", Ansi.LBLUE)
+    log("Body: {}".format(body.replace(b'\x00', b'')), Ansi.LBLUE)
     log("=== DEBUG ===", Ansi.LCYAN)
 
     """
