@@ -11,7 +11,7 @@ from quart import current_app
 from packets import Reader
 from packets import Writer
 from constants.mods import Mods
-from constants.modes import Modes
+from constants.mode import Mode
 from constants.actions import Actions
 from constants.privileges import BanchoPrivileges
 
@@ -20,8 +20,7 @@ bancho = Blueprint('bancho', __name__)
 # bancho GET
 @bancho.route("/")
 async def bancho_get():
-    log(await request.data, Ansi.LYELLOW)
-    return b"Hello World!", 200
+    return b"ohasekai<br>yoru's bancho attempt.", 200
 
 # bancho POST
 @bancho.route("/", methods=["POST"])
@@ -148,7 +147,7 @@ async def login(body, db):
 
     """ start writing data """
     data = bytearray(Writer.protocolVersion(19))
-    data += Writer.userID(2)
+    data += Writer.userID(user["id"])
     data += Writer.banchoPrivileges(BanchoPrivileges.SUPPORTER)
     data += Writer.channelInfoEnd()
     data += Writer.userPresence(
@@ -157,7 +156,7 @@ async def login(body, db):
         utcOffset,                    # UTC Offset
         118,                          # Country Code
         BanchoPrivileges.SUPPORTER,   # Bancho Privileges
-        Modes.MANIA,                  # Mode
+        Mode.MANIA,                   # Mode
         40.3399,                      # Longitude
         127.5101,                     # Latitude
         1                             # Global Rank
@@ -168,7 +167,7 @@ async def login(body, db):
         "ohaeskai",              # Action Text
         "",                      # Map MD5
         Mods.NOMOD,              # Mods
-        Modes.MANIA,             # Mode
+        Mode.MANIA,              # Mode
         0,                       # Map ID
         0,                       # Ranked Score
         7.27,                    # Accuracy
