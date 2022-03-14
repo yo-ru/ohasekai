@@ -13,7 +13,7 @@ GAMEMODE_REPR_LIST = (
 
 
 @unique
-class Modes(IntEnum):
+class Mode(IntEnum):
     OSU = 0
     TAIKO = 1
     CATCH = 2
