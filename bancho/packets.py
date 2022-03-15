@@ -4,8 +4,8 @@ from typing import Union
 from typing import Callable
 from typing import Collection
 
-from constants.packets import ClientPackets
-from constants.packets import ServerPackets
+from .constants.packets import ClientPackets
+from .constants.packets import ServerPackets
 
 class Reader:
     def __init__(self, body: memoryview) -> None:
@@ -93,7 +93,8 @@ class Writer:
     def channelInfoEnd() -> bytes:
         return write(ServerPackets.CHANNEL_INFO_END)
 
-
+    def restartServer(ms: int) -> bytes:
+        return write(ServerPackets.RESTART, (ms, write_i32))
 
 """ write functions """
 def write(packetID: int, *args: tuple[Any, Callable]) -> bytes:
