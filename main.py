@@ -41,7 +41,7 @@ async def on_start() -> None:
     log("================", Ansi.LCYAN)
 
 # bancho
-from blueprints.bancho import bancho
+from bancho.bancho import bancho
 for sd in ["c", "ce", "c4"]:
     app.register_blueprint(bancho, subdomain=sd)
 
