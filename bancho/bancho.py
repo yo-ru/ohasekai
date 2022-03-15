@@ -45,6 +45,8 @@ async def bancho_post():
 
     # get player object from osu-token
     player = glob.players.get(osuToken)
+
+    # server most likely restarted
     if not player:
         return Writer.restartServer(0) + Writer.notification(f"{current_app.config['SERVER_NAME']}: server restarted!"), 200
 
@@ -68,7 +70,7 @@ async def bancho_post():
             ...
     """
     
-    return player.sendBuffer(), 200
+    return player.debuff(), 200
 
 # bancho login
 async def login(body, db):
@@ -213,8 +215,9 @@ async def login(body, db):
     userData = userPresence + userStatistics
     data += userData
 
+    # send userPresence and userStatistics to all online players
     for t, p in glob.players.items():
-        p.addPacket(userData)
+        p.buff(userData)
 
     # calculate execution time
     handleEndTime = (time.time() - handleStartTime) * 1000
@@ -225,4 +228,5 @@ async def login(body, db):
     # append player to players dict
     glob.players[player.token] = player
 
+    # user officially logged in
     return bytes(data), 200, {"cho-token": player.token}

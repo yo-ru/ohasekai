@@ -7,6 +7,8 @@ from typing import Collection
 from .constants.packets import ClientPackets
 from .constants.packets import ServerPackets
 
+tuple[*int]
+
 class Reader:
     def __init__(self, body: memoryview) -> None:
         self.body = body
@@ -21,6 +23,18 @@ class Writer:
         ...
 
     def userID(resp: int) -> bytes:
+        """
+        resp:
+        -1: authentication failed
+        -2: old client
+        -3: banned
+        -4: banned
+        -5: error occurred
+        -6: needs supporter
+        -7: password reset
+        -8: requires verification
+        ??: valid id
+        """
         return write(ServerPackets.USER_ID, (resp, write_i32))
 
     def notification(message: str) -> bytes:
@@ -96,6 +110,9 @@ class Writer:
     def restartServer(ms: int) -> bytes:
         return write(ServerPackets.RESTART, (ms, write_i32))
 
+    def sendMessage(fro: str, msg: str, to: str, froID: int) -> bytes:
+        return write(ServerPackets.SEND_MESSAGE, ((fro, msg, to, froID), write_message))
+
 """ write functions """
 def write(packetID: int, *args: tuple[Any, Callable]) -> bytes:
     packet = bytearray(struct.pack("<Hx", packetID))
@@ -137,18 +154,20 @@ def write_i32_list(list: Collection[int]) -> bytearray:
 
     return ret
 
-def write_message(sender: str, msg: str, recipient: str, sender_id: int) -> bytearray:
-    ret = bytearray(write_string(sender))
-    ret += write_string(msg)
-    ret += write_string(recipient)
-    ret += sender_id.to_bytes(4, "little", signed=True)
-    return ret
+def write_message(*args: tuple[str, str, str, int]) -> bytearray:
+    for fro, msg, to, froID in args:
+        ret = bytearray(write_string(fro))
+        ret += write_string(msg)
+        ret += write_string(to)
+        ret += froID.to_bytes(4, "little", signed=True)
+        return ret
 
-def write_channel(name: str, topic: str, count: int) -> bytearray:
-    ret = bytearray(write_string(name))
-    ret += write_string(topic)
-    ret += count.to_bytes(2, "little")
-    return ret
+def write_channel(*args: tuple[str, str, int]) -> bytearray:
+    for name, topic, count in args:
+        ret = bytearray(write_string(name))
+        ret += write_string(topic)
+        ret += count.to_bytes(2, "little")
+        return ret
 
 def write_i8(num: int) -> bytes:
     return struct.pack("<b", num)

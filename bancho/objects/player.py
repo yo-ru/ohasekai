@@ -35,10 +35,12 @@ class Player:
     def __repr__(self) -> str:
         return f"{self.username} ({self.id})"
 
-    def addPacket(self, packet: bytes) -> None:
+    """ add packet to buffer """
+    def buff(self, packet: bytes) -> None:
         self._buffer += packet
 
-    def sendBuffer(self) -> bytes:
+    """ return buffer then clear buffer """
+    def debuff(self) -> bytes:
         if self._buffer:
             data = bytes(self._buffer)
             self._buffer.clear()
