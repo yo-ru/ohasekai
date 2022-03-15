@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import unique
-from enum import IntEnum
 from enum import IntFlag
 
 @unique
