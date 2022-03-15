@@ -7,8 +7,6 @@ from typing import Collection
 from .constants.packets import ClientPackets
 from .constants.packets import ServerPackets
 
-tuple[*int]
-
 class Reader:
     def __init__(self, body: memoryview) -> None:
         self.body = body
