@@ -4,16 +4,21 @@ import uuid
 import bcrypt
 from cmyui import log
 from cmyui import Ansi
+from h11 import IDLE
 from quart import request
 from quart import Blueprint
 from quart import current_app
 
-from packets import Reader
-from packets import Writer
-from constants.mods import Mods
-from constants.mode import Mode
-from constants.actions import Actions
-from constants.privileges import BanchoPrivileges
+from bancho.constants.action import ActionData
+
+from .objects import glob
+from .packets import Reader
+from .packets import Writer
+from .constants.mode import Mode
+from .objects.player import Player
+from .constants.mode import ModeData
+from .constants.action import ActionData
+from .constants.privileges import BanchoPrivileges
 
 bancho = Blueprint('bancho', __name__)
 
@@ -26,6 +31,7 @@ async def bancho_get():
 @bancho.route("/", methods=["POST"])
 async def bancho_post():
     headers = request.headers
+    osuToken = headers.get("osu-token")
     body = await request.data
 
     # not osu!
@@ -33,16 +39,19 @@ async def bancho_post():
         return await bancho_get()
 
     # client requesting login
-    if "osu-token" not in headers:
+    if not osuToken:
         async with current_app.config["DB"].connection() as db:
             return await login(body, db)
 
-    # TODO: client reconnecting/doing other stuff
+    # get player object from osu-token
+    player = glob.players.get(osuToken)
+    if not player:
+        return Writer.restartServer(0) + Writer.notification(f"{current_app.config['SERVER_NAME']}: server restarted!"), 200
 
     # DEBUG
     log("=== DEBUG ===", Ansi.LCYAN)
     #log(f"Headers: {headers}", Ansi.LYELLOW)
-    log("Body: {}".format(body.replace(b'\x00', b'')), Ansi.LBLUE)
+    log(f"Body: {body}", Ansi.LBLUE)
     log("=== DEBUG ===", Ansi.LCYAN)
 
     """
@@ -58,10 +67,10 @@ async def bancho_post():
         for packet in Reader(body):
             ...
     """
-    return b"ok", 200
+    
+    return player.sendBuffer(), 200
 
 # bancho login
-bcryptCache = {}
 async def login(body, db):
     # used to calculate length of execution
     handleStartTime = time.time()
@@ -134,6 +143,7 @@ async def login(body, db):
     user = dict(user)
 
     # check user password
+    bcryptCache = glob.bcryptCache
     passwordHash = user["passwordHash"].encode()
     if passwordHash in bcryptCache:  # password cached (fast)
         if passwordMD5 != bcryptCache[passwordHash]:
@@ -146,41 +156,73 @@ async def login(body, db):
     """ end checking data """
 
     """ start writing data """
+    playerMode = ModeData(
+        mode = Mode.OSU,
+        globalRank = 1,
+        pp = 727,
+        totalScore = 727,
+        rankedScore = 727,
+        accuracy = 7.27,
+        plays = 727
+    )
+
+    player = Player(
+        id = user["id"],
+        username = user["username"],
+        usernameSafe = user["usernameSafe"],
+        privileges = user["privileges"],
+        token = str(uuid.uuid4()),
+        passwordHash = user["passwordHash"],
+
+        mode = dict[Mode.OSU, playerMode],
+        action = ActionData
+    )
+
     data = bytearray(Writer.protocolVersion(19))
-    data += Writer.userID(user["id"])
+    data += Writer.userID(player.id)
     data += Writer.banchoPrivileges(BanchoPrivileges.SUPPORTER)
     data += Writer.channelInfoEnd()
-    data += Writer.userPresence(
-        user["id"],                   # User ID
-        user["username"],             # Username
+
+    userPresence = Writer.userPresence(
+        player.id,                    # User ID
+        player.username,              # Username
         utcOffset,                    # UTC Offset
         118,                          # Country Code
         BanchoPrivileges.SUPPORTER,   # Bancho Privileges
-        Mode.MANIA,                   # Mode
+        player.action.mode,           # Mode
         40.3399,                      # Longitude
         127.5101,                     # Latitude
-        1                             # Global Rank
+        playerMode.globalRank         # Global Rank
     )
-    data += Writer.userStatistics(
-        user["id"],              # User ID
-        Actions.TESTING,         # Action
-        "ohaeskai",              # Action Text
-        "",                      # Map MD5
-        Mods.NOMOD,              # Mods
-        Mode.MANIA,              # Mode
-        0,                       # Map ID
-        0,                       # Ranked Score
-        7.27,                    # Accuracy
-        727,                     # Plays
-        727,                     # Total Score
-        1,                       # Global Rank
-        727                      # PP
+    userStatistics = Writer.userStatistics(
+        player.id,               # User ID
+        player.action.action,    # Action
+        player.action.text,      # Action Text
+        player.action.mapMD5,    # Map MD5
+        player.action.mods,      # Mods
+        player.action.mode,      # Mode
+        player.action.mapID,     # Map ID
+        playerMode.mode,         # Ranked Score
+        playerMode.accuracy,     # Accuracy
+        playerMode.plays,        # Plays
+        playerMode.totalScore,   # Total Score
+        playerMode.globalRank,   # Global Rank
+        playerMode.pp            # PP
     )
+
+    userData = userPresence + userStatistics
+    data += userData
+
+    for t, p in glob.players.items():
+        p.addPacket(userData)
 
     # calculate execution time
     handleEndTime = (time.time() - handleStartTime) * 1000
 
-    data += Writer.notification(f"ohasekai: Welcome {user['username']}!\nTook {handleEndTime:.2f}ms")
+    data += Writer.notification(f"{current_app.config['SERVER_NAME']}: Welcome {player.username}!\nTook {handleEndTime:.2f}ms")
     """ end writing data """
 
-    return bytes(data), 200, {"cho-token": str(uuid.uuid4())}
+    # append player to players dict
+    glob.players[player.token] = player
+
+    return bytes(data), 200, {"cho-token": player.token}
