@@ -4,7 +4,6 @@ import uuid
 import bcrypt
 from cmyui import log
 from cmyui import Ansi
-from h11 import IDLE
 from quart import request
 from quart import Blueprint
 from quart import current_app
