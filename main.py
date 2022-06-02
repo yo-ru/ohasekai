@@ -1,3 +1,4 @@
+import os
 import aiohttp
 
 import pymysql
@@ -26,11 +27,13 @@ async def on_start() -> None:
     try:
         await app.config["DB"].connect()
     except pymysql.err.OperationalError:
-        log("Failed to connect to MySQL!", Ansi.LRED),
-        exit(1)
+        log("Failed to connect to MySQL!", Ansi.LRED)
+        log("================", Ansi.LCYAN)
+        os._exit(1)
     except:
         log("Fatal error occured when connecting to MySQL!", Ansi.LRED)
-        exit(1)
+        log("================", Ansi.LCYAN)
+        os._exit(1)
     log("MySQL prepared...", Ansi.LYELLOW)
 
     # prepare client session
@@ -46,7 +49,14 @@ for sd in ["c", "ce", "c4"]:
     app.register_blueprint(bancho, subdomain=sd)
 
 if __name__ == "__main__":
-    app.run(
+    try:
+        app.run(
+            host=env.str("SERVER_HOST"),
         host=env.str("SERVER_HOST"), 
-        port=env.int("SERVER_PORT")
-        ) # blocking call
+            host=env.str("SERVER_HOST"),
+            port=env.int("SERVER_PORT")
+            ) # blocking call
+
+    except OSError:
+        log("Address is already in use!", Ansi.LRED)
+        os._exit(1)
