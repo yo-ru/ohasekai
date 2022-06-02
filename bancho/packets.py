@@ -1,14 +1,12 @@
-from csv import reader
 import struct
 from abc import ABC
-from tarfile import SUPPORTED_TYPES
 from typing import Any
 from typing import Union
 from typing import Callable
 from typing import Iterator
 from typing import Collection
 from abc import abstractmethod
-from xmlrpc.client import Server
+from __future__ import annotations
 
 from bancho.objects.player import Player
 from .constants.packets import ClientPackets
@@ -19,15 +17,15 @@ modified bancho.py reader
 thx cm <3
 """
 class BasePacket(ABC):
-    def __init__(self, reader: Any) -> None:
+    def __init__(self, reader: Reader) -> None:
         ...
 
     @abstractmethod
-    async def handle(self, p: Player) -> None:
+    async def handle(self, player: Player) -> None:
         ...
 
 class Ping(BasePacket):
-    async def handle(self, p: Player) -> None:
+    async def handle(self, player: Player) -> None:
         # await p.buff(Writer.pong())
         pass  # nah server isn't here >:(
 
