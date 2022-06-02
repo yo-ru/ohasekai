@@ -1,171 +1,10 @@
 import struct
-from abc import ABC
 from typing import Any
 from typing import Union
 from typing import Callable
-from typing import Iterator
 from typing import Collection
-from abc import abstractmethod
-from __future__ import annotations
 
-from bancho.objects.player import Player
-from .constants.packets import ClientPackets
-from .constants.packets import ServerPackets
-
-""" 
-modified bancho.py reader
-thx cm <3
-"""
-class BasePacket(ABC):
-    def __init__(self, reader: Reader) -> None:
-        ...
-
-    @abstractmethod
-    async def handle(self, player: Player) -> None:
-        ...
-
-class Ping(BasePacket):
-    async def handle(self, player: Player) -> None:
-        # await p.buff(Writer.pong())
-        pass  # nah server isn't here >:(
-
-# TODO: more packets
-SUPPORTED_PACKETS = {
-    ClientPackets.PING: Ping
-}
-
-class Reader:
-    def __init__(self, body: memoryview) -> None:
-        self.body = body
-        self.last_length = 0
-
-    def __iter__(self) -> Iterator[BasePacket]:
-        return self
-
-    def __next__(self) -> BasePacket:
-        while self.body:
-            type, len = self._read_header()
-
-            # ignore unsupported packets
-            if type not in SUPPORTED_PACKETS:
-                if len != 0:
-                    self.body = self.body[len:]
-            else:
-                # packet supported, read
-                break
-        else:
-            raise StopIteration
-
-        # we have a packet handler for this.
-        self.last_length = len
-        return SUPPORTED_PACKETS.get(type)(self)
-
-    """ read functions """
-    # TODO: read functions
-    def _read_header(self) -> tuple[ClientPackets, int]:
-        """Read the header of an osu! packet (id & length)."""
-        data = struct.unpack("<HxI", self.body[:7])
-        self.body = self.body[7:]
-        return ClientPackets(data[0]), data[1]
-
-    def read_raw(self) -> memoryview:
-        val = self.body[: self.last_length]
-        self.body = self.body[self.last_length :]
-        return val
-    
-    def read_i8(self) -> int:
-        val = self.body[0]
-        self.body = self.body[1:]
-        return val - 256 if val > 127 else val
-
-    def read_u8(self) -> int:
-        val = self.body[0]
-        self.body = self.body[1:]
-        return val
-
-    def read_i16(self) -> int:
-        val = int.from_bytes(self.body[:2], "little", signed=True)
-        self.body = self.body[2:]
-        return val
-
-    def read_u16(self) -> int:
-        val = int.from_bytes(self.body[:2], "little", signed=False)
-        self.body = self.body[2:]
-        return val
-
-    def read_i32(self) -> int:
-        val = int.from_bytes(self.body[:4], "little", signed=True)
-        self.body = self.body[4:]
-        return val
-
-    def read_u32(self) -> int:
-        val = int.from_bytes(self.body[:4], "little", signed=False)
-        self.body = self.body[4:]
-        return val
-
-    def read_i64(self) -> int:
-        val = int.from_bytes(self.body[:8], "little", signed=True)
-        self.body = self.body[8:]
-        return val
-
-    def read_u64(self) -> int:
-        val = int.from_bytes(self.body[:8], "little", signed=False)
-        self.body = self.body[8:]
-        return val
-
-    def read_f16(self) -> float:
-        (val,) = struct.unpack_from("<e", self.body[:2])
-        self.body = self.body[2:]
-        return val
-
-    def read_f32(self) -> float:
-        (val,) = struct.unpack_from("<f", self.body[:4])
-        self.body = self.body[4:]
-        return val
-
-    def read_f64(self) -> float:
-        (val,) = struct.unpack_from("<d", self.body[:8])
-        self.body = self.body[8:]
-        return val
-
-    def read_i32_list_i16l(self) -> tuple[int]:
-        length = int.from_bytes(self.body[:2], "little")
-        self.body = self.body[2:]
-
-        val = struct.unpack(f'<{"I" * length}', self.body[: length * 4])
-        self.body = self.body[length * 4 :]
-        return val
-
-    def read_i32_list_i32l(self) -> tuple[int]:
-        length = int.from_bytes(self.body[:4], "little")
-        self.body = self.body[4:]
-
-        val = struct.unpack(f'<{"I" * length}', self.body[: length * 4])
-        self.body = self.body[length * 4 :]
-        return val
-
-    def read_string(self) -> str:
-        exists = self.body[0] == 0x0B
-        self.body = self.body[1:]
-
-        if not exists:
-            return ""
-
-        length = shift = 0
-
-        while True:
-            byte = self.body[0]
-            self.body = self.body[1:]
-
-            length |= (byte & 0x7F) << shift
-            if (byte & 0x80) == 0:
-                break
-
-            shift += 7
-
-        val = self.body[:length].tobytes().decode()  # copy
-        self.body = self.body[length:]
-        return val
+from bancho.constants.packets import ServerPackets
 
 class Writer:
     def __init__(self) -> None:
@@ -195,8 +34,11 @@ class Writer:
     def banchoPrivileges(privileges: int) -> bytes:
         return write(ServerPackets.PRIVILEGES, (privileges, write_i32))
 
-    def silenceEnd(delta: int) -> bytes:
-        return write(ServerPackets.SILENCE_END, (delta, write_i32))
+    def mainMenuIcon(iconURL: str, clickURL: str) -> bytes:
+        return write(
+            ServerPackets.MAIN_MENU_ICON,
+            (iconURL + "|" + clickURL, write_string),
+        )
 
     def userPresence(
         userID: int,
@@ -253,17 +95,43 @@ class Writer:
             (pp, write_i16)
         )
 
-    def channelInfoEnd() -> bytes:
-        return write(ServerPackets.CHANNEL_INFO_END)
-
     def restartServer(ms: int) -> bytes:
         return write(ServerPackets.RESTART, (ms, write_i32))
+
+    # NOTE: unused?
+    def pong() -> bytes:
+        return write(ServerPackets.PONG)
+
+    def logout(userID: int) -> bytes:
+        return write(
+            ServerPackets.USER_LOGOUT, 
+            (userID, write_i32), 
+            (0, write_u8)
+        )
+
+    def versionUpdate() -> bytes:
+        return write(ServerPackets.VERSION_UPDATE)
+
+    def getAttention() -> bytes:
+        return write(ServerPackets.GET_ATTENTION)
+
+    def friendsList(friends: Collection[int]) -> bytes:
+        return write(ServerPackets.FRIENDS_LIST, (friends, write_i32_list))
+    
+    def channelJoin(name: str) -> bytes:
+        return write(ServerPackets.CHANNEL_JOIN_SUCCESS, (name, write_string))
+    
+    def channelAutoJoin(name: str, topic: str, playerCount: int):
+        return write(ServerPackets.CHANNEL_AUTO_JOIN, ((name, topic, playerCount)), write_channel)
+
+    def channelInfoEnd() -> bytes:
+        return write(ServerPackets.CHANNEL_INFO_END)
 
     def sendMessage(fro: str, msg: str, to: str, froID: int) -> bytes:
         return write(ServerPackets.SEND_MESSAGE, ((fro, msg, to, froID), write_message))
 
-    def pong() -> bytes:
-        return write(ServerPackets.PONG)
+    def silenceEnd(delta: int) -> bytes:
+        return write(ServerPackets.SILENCE_END, (delta, write_i32))
 
 """ write functions """
 def write(packetID: int, *args: tuple[Any, Callable]) -> bytes:
