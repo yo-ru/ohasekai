@@ -8,16 +8,14 @@ from quart import request
 from quart import Blueprint
 from quart import current_app
 
+from bancho.objects import glob
+from bancho.packets.reader import Reader
+from bancho.packets.writer import Writer
+from bancho.constants.mode import Mode
+from bancho.objects.player import Player
+from bancho.constants.mode import ModeData
 from bancho.constants.action import ActionData
-
-from .objects import glob
-from .packets import Reader
-from .packets import Writer
-from .constants.mode import Mode
-from .objects.player import Player
-from .constants.mode import ModeData
-from .constants.action import ActionData
-from .constants.privileges import BanchoPrivileges
+from bancho.constants.privileges import BanchoPrivileges
 
 bancho = Blueprint('bancho', __name__)
 

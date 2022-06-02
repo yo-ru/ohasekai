@@ -1,4 +1,4 @@
-from .player import Player
+from bancho.objects.player import Player
 
 
 players: dict[str, Player] = {}

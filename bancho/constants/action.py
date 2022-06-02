@@ -2,8 +2,8 @@ from enum import unique
 from enum import IntEnum
 from dataclasses import dataclass
 
-from .mode import Mode
-from .mods import Mods
+from bancho.constants.mode import Mode
+from bancho.constants.mods import Mods
 
 @unique
 class Action(IntEnum):

@@ -2,11 +2,14 @@ from typing import Union
 from typing import Optional
 from functools import cached_property
 
-from ..constants.mode import Mode
-from ..constants.mode import ModeData
-from ..constants.action import ActionData
-from ..constants.privileges import Privileges
-from ..constants.privileges import BanchoPrivileges
+from bancho.objects import glob
+from bancho.constants.mode import Mode
+from bancho.packets.writer import Writer
+from bancho.constants.mode import ModeData
+from bancho.constants.action import ActionData
+from bancho.constants.privileges import Privileges
+from bancho.constants.privileges import BanchoPrivileges
+
 
 
 class Player:
