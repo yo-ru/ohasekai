@@ -51,23 +51,23 @@ async def bancho_post():
 
     # DEBUG
     log("=== DEBUG ===", Ansi.LCYAN)
-    #log(f"Headers: {headers}", Ansi.LYELLOW)
+    log(f"Headers: {headers}", Ansi.LYELLOW)
     log(f"Body: {body}", Ansi.LBLUE)
     log("=== DEBUG ===", Ansi.LCYAN)
 
     """
-    TODO: handle client packets
+    TODO: handle more client packets
     to complete this part of bancho we need:
             - [] a player object 
             - [] a channel object
             - [] a message object
             - [] a match object
             - [] a replay object
-    
+    """
+
     with memoryview(body) as body:
         for packet in Reader(body):
-            ...
-    """
+            await packet.handle(player)
     
     return player.debuff(), 200
 
@@ -157,7 +157,7 @@ async def login(body, db):
     """ end checking data """
 
     """ start writing data """
-    playerMode = ModeData(
+    playerMode = ModeData(  # TODO: get ModeData from database
         mode = Mode.OSU,
         globalRank = 1,
         pp = 727,
@@ -175,25 +175,28 @@ async def login(body, db):
         token = str(uuid.uuid4()),
         passwordHash = user["passwordHash"],
 
-        mode = dict[Mode.OSU, playerMode],
+        mode = playerMode,
         action = ActionData
     )
 
     data = bytearray(Writer.protocolVersion(19))
     data += Writer.userID(player.id)
-    data += Writer.banchoPrivileges(BanchoPrivileges.SUPPORTER)
+
+    # TODO: Check tournament client privileges
+
+    data += Writer.banchoPrivileges(player.bancho_privileges)
     data += Writer.channelInfoEnd()
 
-    userPresence = Writer.userPresence(
+    userPresence = Writer.userPresence( # TODO: Get Country Code & Lat/Long From IP
         player.id,                    # User ID
         player.username,              # Username
         utcOffset,                    # UTC Offset
         118,                          # Country Code
         BanchoPrivileges.SUPPORTER,   # Bancho Privileges
-        player.action.mode,           # Mode
+        player.mode.mode,             # Mode
         40.3399,                      # Longitude
         127.5101,                     # Latitude
-        playerMode.globalRank         # Global Rank
+        player.mode.globalRank        # Global Rank
     )
     userStatistics = Writer.userStatistics(
         player.id,               # User ID
@@ -203,12 +206,12 @@ async def login(body, db):
         player.action.mods,      # Mods
         player.action.mode,      # Mode
         player.action.mapID,     # Map ID
-        playerMode.mode,         # Ranked Score
-        playerMode.accuracy,     # Accuracy
-        playerMode.plays,        # Plays
-        playerMode.totalScore,   # Total Score
-        playerMode.globalRank,   # Global Rank
-        playerMode.pp            # PP
+        player.mode.mode,        # Ranked Score
+        player.mode.accuracy,    # Accuracy
+        player.mode.plays,       # Plays
+        player.mode.totalScore,  # Total Score
+        player.mode.globalRank,  # Global Rank
+        player.mode.pp           # PP
     )
 
     userData = userPresence + userStatistics

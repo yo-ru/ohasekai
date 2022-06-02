@@ -46,4 +46,7 @@ for sd in ["c", "ce", "c4"]:
     app.register_blueprint(bancho, subdomain=sd)
 
 if __name__ == "__main__":
-    app.run(port=8000) # blocking call
+    app.run(
+        host=env.str("SERVER_HOST"), 
+        port=env.int("SERVER_PORT")
+        ) # blocking call
