@@ -68,7 +68,13 @@ class Player:
             privs |= BanchoPrivileges.DEVELOPER
         return privs
 
+    def logout(self) -> None:
+        glob.players.pop(self.token)
 
+        self.token = ""
+
+        for t, p in glob.players.items():
+            p.buff(Writer.logout(self.id))
 
 
     
