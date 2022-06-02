@@ -49,7 +49,7 @@ async def bancho_post():
 
     # DEBUG
     log("=== DEBUG ===", Ansi.LCYAN)
-    log(f"Headers: {headers}", Ansi.LYELLOW)
+    log(f"Headers:\n{headers}", Ansi.LYELLOW)
     log(f"Body: {body}", Ansi.LBLUE)
     log("=== DEBUG ===", Ansi.LCYAN)
 
@@ -181,8 +181,9 @@ async def login(body, db):
     data += Writer.userID(player.id)
 
     # TODO: Check tournament client privileges
-
     data += Writer.banchoPrivileges(player.bancho_privileges)
+
+    # TODO: Channels
     data += Writer.channelInfoEnd()
 
     data += Writer.mainMenuIcon(current_app.config["MAIN_MENU_ICON_IMAGE_URL"], current_app.config["MAIN_MENU_ICON_CLICK_URL"])
