@@ -24,7 +24,7 @@ class BasePacket(ABC):
 
 class Ping(BasePacket):
     async def handle(self, player: Player) -> None:
-        # await p.buff(Writer.pong())
+        # await player.buff(Writer.pong())
         pass  # nah server isn't here >:(
 
 class Logout(BasePacket):
@@ -167,6 +167,6 @@ class Reader:
 
             shift += 7
 
-        val = self.body[:length].tobytes().decode()  # copy
+        val = self.body[:length].tobytes().decode()
         self.body = self.body[length:]
         return val

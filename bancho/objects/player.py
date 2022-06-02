@@ -10,8 +10,6 @@ from bancho.constants.action import ActionData
 from bancho.constants.privileges import Privileges
 from bancho.constants.privileges import BanchoPrivileges
 
-
-
 class Player:
     def __init__(
         self,
