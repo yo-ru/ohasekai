@@ -185,6 +185,8 @@ async def login(body, db):
     data += Writer.banchoPrivileges(player.bancho_privileges)
     data += Writer.channelInfoEnd()
 
+    data += Writer.mainMenuIcon(current_app.config["MAIN_MENU_ICON_IMAGE_URL"], current_app.config["MAIN_MENU_ICON_CLICK_URL"])
+
     userPresence = Writer.userPresence( # TODO: Get Country Code & Lat/Long From IP
         player.id,                    # User ID
         player.username,              # Username
